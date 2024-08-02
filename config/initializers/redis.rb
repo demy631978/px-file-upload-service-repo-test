@@ -1,0 +1,1 @@
+$redis = Redis::Namespace.new(:file_upload_service, redis: Redis.new)
