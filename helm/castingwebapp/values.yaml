@@ -8,7 +8,7 @@ image:
   repository: demy631978/px-file-upload-service-repo-test
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 1dc583c673f77a0d812ed2184301f310509bb5e7
+  tag: 8429c08d4caf5a696ac66fae0f365fcf3cf0c804
 
 imagePullSecrets: []
 nameOverride: ""
