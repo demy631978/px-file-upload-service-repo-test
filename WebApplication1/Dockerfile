@@ -1,30 +1,42 @@
 FROM ruby:3.1.2-alpine3.16
 
-# ENV BUNDLE_SILENCE_ROOT_WARNING=1 BUNDLE_IGNORE_MESSAGES=1 BUNDLE_GITHUB__HTTPS=1 BUNDLE_FROZEN=1 BUNDLE_PATH=/app/vendor/bundle BUNDLE_BIN=/app/bin BUNDLE_GEMFILE=/app/Gemfile BUNDLE_WITHOUT=development:test DEIS_BUILD_ARGS=1
+# Set environment variables
+ENV NODE_ENV=development \
+    BUNDLE_SILENCE_ROOT_WARNING=1 \
+    BUNDLE_IGNORE_MESSAGES=1 \
+    BUNDLE_GITHUB__HTTPS=1 \
+    BUNDLE_FROZEN=1 \
+    BUNDLE_PATH=/app/vendor/bundle \
+    BUNDLE_BIN=/app/bin \
+    BUNDLE_GEMFILE=/app/Gemfile \
+    BUNDLE_WITHOUT=development:test \
+    DEIS_BUILD_ARGS=1
 
+# Set working directory
 WORKDIR /app
+
+# Copy application code
 COPY . /app/
 
-# ENV BUNLDE_PART /gems
-
+# Install dependencies
 RUN apk add --update --virtual \
-    postgresql-client \
     build-base \
     libpq-dev \
+    postgresql-client \
     gcompat \
     git \
     tzdata \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/* \
+    && bundle install
 
-WORKDIR /app
-COPY . /app/
-
-ENV BUNLDE_PART /gems
-RUN bundle install
-
+# Set up entrypoint
 COPY entrypoint.sh /bin/
 RUN chmod +x /bin/entrypoint.sh
-ENTRYPOINT ["sh", "entrypoint.sh"]
+
+# Expose port
 EXPOSE 3000
 
+# Set entrypoint and default command
+ENTRYPOINT ["sh", "/bin/entrypoint.sh"]
 CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
+
