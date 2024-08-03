@@ -17,9 +17,12 @@ jobs:
           git config --global user.email "demy@castingapp.com"
           git config --global user.name "demy"
 
+      - name: Debug Git Status
+        run: git status
+
       - name: Update image tag in values.yaml
         run: |
-          cd helm/castingwebapp
+          cd helm/castingwebapp || exit 1
           echo "Before:"
           cat values.yaml
           sed -i "s,tag:.*,tag: ${{ github.sha }}," values.yaml
@@ -27,8 +30,10 @@ jobs:
           cat values.yaml
           git add values.yaml
           git status
-          git commit -m "Update image tag"
+          git commit -m "Update image tag" || echo "No changes to commit"
           git push
+        env:
+          CONFIG_REPO_NAME: px-file-upload-service-repo-test
 
   build-test:
     runs-on: ubuntu-latest
@@ -77,8 +82,8 @@ jobs:
     steps:
       - name: Set up Git user
         run: |
-          git config --global user.email "demy@castingapp.com"
-          git config --global user.name "demy"
+          git config --global user.email "ci-bot@yourdomain.com"
+          git config --global user.name "CI Bot"
 
       - name: Clone config repo
         run: |
@@ -90,5 +95,5 @@ jobs:
         run: |
           sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
           git add helm/castingwebapp/values.yaml
-          git commit -m "Update image tag"
+          git commit -m "Update image tag" || echo "No changes to commit"
           git push
