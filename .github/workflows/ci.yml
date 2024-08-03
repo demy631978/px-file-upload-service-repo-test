@@ -57,7 +57,7 @@ jobs:
       - name: Update image tag
         run: |
           cd $CONFIG_REPO_NAME
-          sed -i "s,tag:.*,tag:\ ${{ github.sha }}," helm/webapp/values.yaml
-          git add helm/webapp/values.yaml
+          sed -i "s,tag:.*,tag:\ ${{ github.sha }}," helm/castingwebapp/values.yaml
+          git add helm/castingwebapp/values.yaml
           git commit -m "update image tag"
           git push
