@@ -47,7 +47,7 @@ jobs:
           git config --global user.name "demy-ci-bot"
           echo "cloning app repo"
           git clone https://oauth2:${{ secrets.GH_PAT }}@github.com/${{ github.repository_owner }}/px-file-upload-service-repo-test.git
-          cd argocd-course-webapp
+          cd uploadservicedevtest
           echo "checkout source branch"
           git checkout ${{ github.event.pull_request.head.ref }}
           echo "updating image tag in values file"
