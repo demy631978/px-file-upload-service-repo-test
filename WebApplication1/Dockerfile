@@ -19,15 +19,16 @@ WORKDIR /app
 COPY . /app/
 
 # Install dependencies
-RUN apk add --update --virtual \
+RUN apk update && apk add --no-cache \
     build-base \
-    libpq-dev \
-    postgresql-client \
+    postgresql-dev \
     gcompat \
     git \
     tzdata \
-    && rm -rf /var/cache/apk/* \
-    && bundle install
+    && rm -rf /var/cache/apk/*
+
+# Install Ruby gems
+RUN bundle install
 
 # Set up entrypoint
 COPY entrypoint.sh /bin/
@@ -39,4 +40,3 @@ EXPOSE 3000
 # Set entrypoint and default command
 ENTRYPOINT ["sh", "/bin/entrypoint.sh"]
 CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
-
