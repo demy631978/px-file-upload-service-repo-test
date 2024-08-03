@@ -1,12 +1,19 @@
 FROM ruby:3.1.2-alpine3.16
 
-# ENV BUNDLE_SILENCE_ROOT_WARNING=1 BUNDLE_IGNORE_MESSAGES=1 BUNDLE_GITHUB__HTTPS=1 BUNDLE_FROZEN=1 BUNDLE_PATH=/app/vendor/bundle BUNDLE_BIN=/app/bin BUNDLE_GEMFILE=/app/Gemfile BUNDLE_WITHOUT=development:test DEIS_BUILD_ARGS=1
+# Set environment variables
+ENV BUNDLE_SILENCE_ROOT_WARNING=1 \
+    BUNDLE_IGNORE_MESSAGES=1 \
+    BUNDLE_GITHUB__HTTPS=1 \
+    BUNDLE_FROZEN=1 \
+    BUNDLE_PATH=/app/vendor/bundle \
+    BUNDLE_BIN=/app/bin \
+    BUNDLE_GEMFILE=/app/Gemfile \
+    BUNDLE_WITHOUT=development:test
 
+# Set working directory
 WORKDIR /app
-COPY . /app/
 
-# ENV BUNLDE_PART /gems
-
+# Install dependencies
 RUN apk add --update --virtual \
     postgresql-client \
     build-base \
@@ -16,15 +23,19 @@ RUN apk add --update --virtual \
     tzdata \
     && rm -rf /var/cache/apk/*
 
-WORKDIR /app
+# Copy application code
 COPY . /app/
 
-ENV BUNLDE_PART /gems
+# Install Ruby gems
 RUN bundle install
 
+# Set entrypoint
 COPY entrypoint.sh /bin/
 RUN chmod +x /bin/entrypoint.sh
 ENTRYPOINT ["sh", "entrypoint.sh"]
+
+# Expose port
 EXPOSE 3000
 
+# Define default command
 CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
