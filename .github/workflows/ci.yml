@@ -19,25 +19,25 @@ jobs:
 
       - name: Update image tag in values.yaml
         run: |
-          cd $CONFIG_REPO_NAME
+          cd helm/castingwebapp
           echo "Before:"
-          cat helm/castingwebapp/values.yaml
-          sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
+          cat values.yaml
+          sed -i "s,tag:.*,tag: ${{ github.sha }}," values.yaml
           echo "After:"
-          cat helm/castingwebapp/values.yaml
-          git add helm/castingwebapp/values.yaml
+          cat values.yaml
+          git add values.yaml
           git status
-          git commit -m "update image tag"
+          git commit -m "Update image tag"
           git push
-        env:
-          CONFIG_REPO_NAME: px-file-upload-service-repo-test
 
   build-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - run: echo "Building and testing the app ..."
+
+      - name: Build and test
+        run: echo "Building and testing the app ..."
 
   docker-build-push:
     runs-on: ubuntu-latest
@@ -45,19 +45,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-1
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
       - name: Build and push to ECR
         uses: docker/build-push-action@v2
         with:
@@ -72,17 +77,18 @@ jobs:
     steps:
       - name: Set up Git user
         run: |
-          git config --global user.email "ci-bot@yourdomain.com"
-          git config --global user.name "CI Bot"
+          git config --global user.email "demy@castingapp.com"
+          git config --global user.name "demy"
 
       - name: Clone config repo
         run: |
-          git clone https://oauth2:${{ secrets.GH_PAT }}@github.com/${{ github.repository_owner }}/$CONFIG_REPO_NAME.git
-          cd $CONFIG_REPO_NAME
+          git clone https://oauth2:${{ secrets.GH_PAT }}@github.com/${{ github.repository_owner }}/px-file-upload-service-repo-test.git
+          cd px-file-upload-service-repo-test
           git checkout main
+
       - name: Update image tag in values.yaml
         run: |
           sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
           git add helm/castingwebapp/values.yaml
-          git commit -m "update image tag"
+          git commit -m "Update image tag"
           git push
