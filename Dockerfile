@@ -24,6 +24,9 @@ RUN apk add --update --virtual .build-deps \
     && rm -rf /var/cache/apk/* \
     && apk del .build-deps
 
+# Install Bundler
+RUN gem install bundler:2.4.19
+
 # Copy Gemfile and Gemfile.lock separately to leverage Docker cache
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
@@ -39,4 +42,3 @@ ENTRYPOINT ["sh", "/bin/entrypoint.sh"]
 EXPOSE 3000
 
 CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
-
