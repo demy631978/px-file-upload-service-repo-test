@@ -2,6 +2,7 @@ name: CI/CD Pipeline
 
 env:
   CONFIG_REPO_NAME: px-file-upload-service-repo-test
+  AWS_REGION: us-west-1  # Set the AWS region as an environment variable
 
 on:
   push:
@@ -24,19 +25,25 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
       - name: Login to AWS ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: private
-          region: us-west-1  # Replace with your AWS region
+          skip-logout: false
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           file: WebApplication1/Dockerfile
           push: true
-          tags: ${{ steps.ecr-login.outputs.registry }}/px-file-upload-service-repo-test:${{ github.sha }}
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com/ca-upload-service-dev:${{ github.sha }}
 
   promote-to-dev-environment:
     runs-on: ubuntu-latest
