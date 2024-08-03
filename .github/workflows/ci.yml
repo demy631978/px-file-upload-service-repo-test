@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 env:
   CONFIG_REPO_NAME: px-file-upload-service-repo-test
-  AWS_REGION: us-west-1  # Set the AWS region as an environment variable
+  AWS_REGION: us-west-1
 
 on:
   push:
@@ -13,14 +13,12 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Building and testing the castingapp !!!! ..."
-
-  pull-and-promote:
-    runs-on: ubuntu-latest
-    needs: build-test
-    steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -32,11 +30,40 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: private
-      - name: Pull Pre-built Image
-        run: |
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/px-file-upload-service-repo-test:latest
-          docker tag ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/px-file-upload-service-repo-test:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/px-file-upload-service-repo-test:${{ github.sha }}
+
+  docker-build-push:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to AWS ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: private
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: WebApplication1/Dockerfile
+          push: true
+          tags: 981666308374.dkr.ecr.us-west-1.amazonaws.com/ca-upload-service-dev:latest
+
+  promote-to-dev-environment:
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    steps:
       - name: Promote to Dev Environment
         run: |
           echo "Promoting into dev environment!"
@@ -48,13 +75,13 @@ jobs:
           echo "Checkout main branch"
           git checkout main
           echo "Updating image tag in values file"
-          sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
+          sed -i "s,tag:.*,tag: latest," helm/castingwebapp/values.yaml
           git add . && git commit -m "Update image tag" || echo "No changes to commit"
           git push
 
   notify-success:
     runs-on: ubuntu-latest
-    needs: pull-and-promote
+    needs: promote-to-dev-environment
     steps:
       - name: Notify Success
         run: echo "CI/CD pipeline completed successfully!"
