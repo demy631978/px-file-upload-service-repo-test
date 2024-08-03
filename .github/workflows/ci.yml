@@ -14,7 +14,6 @@ jobs:
 
       - name: Update image tag in values.yaml
         run: |
-          cd $CONFIG_REPO_NAME
           echo "Before:"
           cat helm/castingwebapp/values.yaml
           sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
@@ -76,7 +75,6 @@ jobs:
           git checkout main
       - name: Update image tag in values.yaml
         run: |
-          cd $CONFIG_REPO_NAME
           sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
           git add helm/castingwebapp/values.yaml
           git commit -m "update image tag"
