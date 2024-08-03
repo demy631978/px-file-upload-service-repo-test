@@ -36,14 +36,13 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: private
-          skip-logout: false
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           file: WebApplication1/Dockerfile
           push: true
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com/ca-upload-service-dev:${{ github.sha }}
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com/px-file-upload-service-repo-test:${{ github.sha }}
 
   promote-to-dev-environment:
     runs-on: ubuntu-latest
@@ -60,6 +59,13 @@ jobs:
           echo "Checkout main branch"
           git checkout main
           echo "Updating image tag in values file"
-          sed -i "s,tag:.*,tag: ${GITHUB_SHA}," helm/castingwebapp/values.yaml
+          sed -i "s,tag:.*,tag: ${{ github.sha }}," helm/castingwebapp/values.yaml
           git add . && git commit -m "Update image tag" || echo "No changes to commit"
           git push
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: promote-to-dev-environment
+    steps:
+      - name: Notify Success
+        run: echo "CI/CD pipeline completed successfully!"
