@@ -1,7 +1,7 @@
 name: ci
 
 env:
-  CONFIG_REPO_NAME: castingapp-config
+  CONFIG_REPO_NAME: ca-upload-service-dev
   
 on:
   push:
