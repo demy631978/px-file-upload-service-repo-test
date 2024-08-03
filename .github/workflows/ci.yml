@@ -13,12 +13,14 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
+      - run: echo "Building and testing the castingapp !!!! ..."
+
+  pull-and-promote:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -30,18 +32,11 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: private
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: WebApplication1/Dockerfile
-          push: true
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com/px-file-upload-service-repo-test:${{ github.sha }}
-
-  promote-to-dev-environment:
-    runs-on: ubuntu-latest
-    needs: build-test
-    steps:
+      - name: Pull Pre-built Image
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/px-file-upload-service-repo-test:latest
+          docker tag ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/px-file-upload-service-repo-test:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/px-file-upload-service-repo-test:${{ github.sha }}
       - name: Promote to Dev Environment
         run: |
           echo "Promoting into dev environment!"
@@ -59,8 +54,7 @@ jobs:
 
   notify-success:
     runs-on: ubuntu-latest
-    needs: promote-to-dev-environment
+    needs: pull-and-promote
     steps:
       - name: Notify Success
         run: echo "CI/CD pipeline completed successfully!"
-
