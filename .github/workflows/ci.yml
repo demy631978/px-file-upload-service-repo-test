@@ -35,22 +35,6 @@ jobs:
         with:
           registry-type: private
 
-      # Add debug step to list the directory contents
-      - name: List Directory Contents
-        run: ls -R
-
-      # Set up Node.js environment to version 16
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run main script
-        run: node main.js
-
   docker-build-push:
     runs-on: ubuntu-latest
     needs: build-test
