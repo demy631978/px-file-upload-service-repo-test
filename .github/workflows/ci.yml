@@ -12,9 +12,6 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -37,17 +34,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: private
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run main script
-        run: node main.js
 
   docker-build-push:
     runs-on: ubuntu-latest
