@@ -1,13 +1,13 @@
 name: CI/CD Pipeline
 
-env:
-  CONFIG_REPO_NAME: px-file-upload-service-repo-test
-  AWS_REGION: us-west-1
-
 on:
   push:
     branches:
       - 'main'
+
+env:
+  CONFIG_REPO_NAME: px-file-upload-service-repo-test
+  AWS_REGION: us-west-1
 
 jobs:
   build-test:
@@ -28,13 +28,22 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: 'us-west-1'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'us-west-1'
+
+      - name: Debug AWS Credentials
+        run: |
+          echo "AWS_REGION=$AWS_REGION"
+          echo "AWS_ACCESS_KEY_ID set: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+          echo "AWS_SECRET_ACCESS_KEY set: ${{ secrets.AWS_SECRET_ACCESS_KEY != '' }}"
 
       - name: Login to AWS ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
         with:
           registry-type: private
-          
 
   docker-build-push:
     runs-on: ubuntu-latest
@@ -69,9 +78,6 @@ jobs:
           file: WebApplication1/Dockerfile
           push: true
           tags: 981666308374.dkr.ecr.us-west-1.amazonaws.com/ca-upload-service-dev:latest
-          secrets: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   promote-to-dev-environment:
     runs-on: ubuntu-latest
